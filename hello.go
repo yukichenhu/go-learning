@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"learning/entity"
+	"time"
 )
+
+var cache = newLocalCache(time.Minute * 5)
 
 func main() {
 	//测试switch
@@ -30,6 +33,9 @@ func main() {
 	//测试channel
 	nums := []int{1, 2, 3, 4, 5, 6}
 	println(testChannel(nums))
+	//测试缓存
+	cache.update("name", []byte("chenhu"), time.Now().Unix()+5*3600)
+	fmt.Printf("Cache获取的数据为%s", string(cache.cache["name"].content))
 }
 
 /**
@@ -103,14 +109,14 @@ type Animal interface {
 type Dog struct {
 }
 
-func (dog Dog) say() {
+func (Dog) say() {
 	println("汪汪汪")
 }
 
 type Cat struct {
 }
 
-func (cat Cat) say() {
+func (Cat) say() {
 	println("喵喵喵")
 }
 
