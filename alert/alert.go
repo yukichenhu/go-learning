@@ -1,50 +1,25 @@
 package main
 
 import (
-	"fmt"
+	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
-	"learning/entity"
-	"net/http"
+	"os"
+	"strconv"
 )
 
-var r *gin.Engine
-
 func main() {
-	r = gin.Default()
-	r.POST("/webhook", func(context *gin.Context) {
-		var notify entity.Notification
-		err := context.BindJSON(&notify)
-		if err != nil {
-			context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
-
-		fmt.Println("报警接受成功", notify)
-		context.JSON(http.StatusOK, "receive success")
+	r := gin.Default()
+	r.GET("/hello", func(context *gin.Context) {
+		context.String(200, "hello "+strconv.Itoa(os.Getpid()))
 	})
-	r.POST("/addMapping", func(context *gin.Context) {
-		method := context.PostForm("method")
-		url := context.PostForm("url")
-		resp := context.PostForm("resp")
-		fmt.Println(fmt.Sprintf("method:%s,url:%s,resp:%s", method, url, resp))
-		addMapping(method, url, resp)
-		context.String(200, "add success")
-	})
-	r.Run(":8888")
+	go openChild()
+	_ = endless.ListenAndServe(":8888", r)
 }
 
-func addMapping(method string, url string, resp string) {
-	switch method {
-	case "POST":
-		r.POST(url, func(context *gin.Context) {
-			context.JSON(200, gin.H{"msg": resp})
-		})
-	case "GET":
-		r.GET(url, func(context *gin.Context) {
-			context.JSON(200, gin.H{"msg": resp})
-		})
-	default:
-		r.Any(url, func(context *gin.Context) {
-			context.JSON(200, gin.H{"msg": resp})
-		})
-	}
+func openChild() {
+	r := gin.Default()
+	r.GET("/child", func(context *gin.Context) {
+		context.String(200, "child "+strconv.Itoa(os.Getpid()))
+	})
+	_ = endless.ListenAndServe(":8889", r)
 }
